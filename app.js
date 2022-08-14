@@ -42,6 +42,4 @@ app.use('/api/v1/users', userRoutes);
 
 app.use('/api/v1/tours', toursRoutes);
 
-app.listen(PORT, () => {
-  console.log('Running on port ' + PORT);
-});
+module.exports = app;
