@@ -31,6 +31,9 @@ const getAllTours = (req, res) => {
     },
   });
 };
+const dataTours = JSON.parse(
+  fs.readFileSync(__dirname + '/dev-data/data/tours-simple.json')
+);
 
 const getTour = (req, res) => {
   const tour = dataTours.find((el) => el.id === Number(req.params.id));
@@ -89,9 +92,37 @@ const deleteTour = (req, res) => {
   });
 };
 
-const dataTours = JSON.parse(
-  fs.readFileSync(__dirname + '/dev-data/data/tours-simple.json')
-);
+//Users
+const getAllUsers = (req, res) => {
+  res.status(500).json({
+    status: 'Error',
+    message: 'This route is not yed defined',
+  });
+};
+const createUser = (req, res) => {
+  res.status(500).json({
+    status: 'Error',
+    message: 'This route is not yed defined',
+  });
+};
+const getUser = (req, res) => {
+  res.status(500).json({
+    status: 'Error',
+    message: 'This route is not yed defined',
+  });
+};
+const deleteUser = (req, res) => {
+  res.status(500).json({
+    status: 'Error',
+    message: 'This route is not yed defined',
+  });
+};
+const updateUser = (req, res) => {
+  res.status(500).json({
+    status: 'Error',
+    message: 'This route is not yed defined',
+  });
+};
 
 // app.get('/api/v1/tours', getAllTours);
 
@@ -106,13 +137,23 @@ const dataTours = JSON.parse(
 // more clever way
 
 // 3) Routes
-app.route('/api/v1/tours').get(getAllTours).post(getTour);
 
-app
-  .route('/api/v1/tours/:id')
-  .get(getTour)
-  .patch(updateTour)
-  .delete(deleteTour);
+const tourRouter = express.Router();
+const userRoutes = express.Router();
+app.use('/api/v1/tours', tourRouter);
+app.use('api/v1/users', userRoutes);
+tourRouter.route('/').get(getAllTours).post(getTour);
+
+tourRouter.route('/:id').get(getTour).patch(updateTour).delete(deleteTour);
+
+//users
+userRoutes.route('/api/v1/users').get(getAllUsers).post(createUser);
+
+userRoutes
+  .route('/api/v1/users/:id')
+  .get(getUser)
+  .patch(updateUser)
+  .delete(deleteUser);
 
 app.listen(PORT, () => {
   console.log('Running on port ' + PORT);
