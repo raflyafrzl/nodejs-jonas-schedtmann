@@ -1,6 +1,7 @@
 const express = require('express');
-const router = express.Router();
 const tourController = require('../controllers/tourController');
+
+const router = express.Router();
 
 //this middleware kind of local mini app for certain route( which is tours for this example)
 //it wouldn't be bothering any routes because it's only defined in Tour Routes

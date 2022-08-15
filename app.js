@@ -1,16 +1,18 @@
 const express = require('express');
-const app = express();
-const fs = require('fs');
-const PORT = 3000;
 const morgan = require('morgan');
 const toursRoutes = require('./routes/tourRoutes');
 const userRoutes = require('./routes/userRoutes');
 
+const app = express();
 //1)   Middleware
 
-app.use(morgan('dev'));
+//check so morgan dependencies always appear on development env only
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 
 app.use(express.json());
+app.use(express.static(`${__dirname}/public`));
 // app.get('/', (req, res) => {
 //   res.status(200).json({
 //     message: 'Hello from server',
