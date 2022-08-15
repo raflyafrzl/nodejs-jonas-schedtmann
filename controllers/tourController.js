@@ -4,19 +4,31 @@ const dataTours = JSON.parse(
   fs.readFileSync(__dirname + '/../dev-data/data/tours-simple.json')
 );
 
-//route handler
-exports.getTour = (req, res) => {
-  const tour = dataTours.find((el) => el.id === Number(req.params.id));
+exports.checkPostData = (req, res, next) => {
+  if (!req.body?.price || !req.body?.name) {
+    return res.status(400).json({
+      status: 'Failed',
+      message: 'Invalid Name or Price',
+    });
+  }
+  next();
+};
 
-  console.log(tour);
-  //check condition if there's no data that client wanted
-  if (!tour) {
+exports.checkId = (req, res, next, val) => {
+  console.log('Tour id is ' + val);
+  if (Number(val) > dataTours.length) {
     return res.status(404).json({
-      status: 'failed',
+      status: 'fail',
       message: 'Invalid ID',
     });
   }
 
+  next();
+};
+
+//route handler
+exports.getTour = (req, res) => {
+  const tour = dataTours.find((el) => el.id === Number(req.params.id));
   res.status(200).json({
     status: 'success ',
     data: {
@@ -40,7 +52,7 @@ exports.addTour = (req, res) => {
 
   dataTours.push(newTour);
   fs.writeFile(
-    __dirname + '/dev-data/data/tours-simple.json',
+    __dirname + '/../dev-data/data/tours-simple.json',
     JSON.stringify(dataTours),
     (err) => {
       res.status(201).json({
