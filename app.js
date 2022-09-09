@@ -7,7 +7,7 @@ const app = express();
 //1)   Middleware
 
 //check so morgan dependencies always appear on development env only
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'DEVELOPMENT') {
   app.use(morgan('dev'));
 }
 

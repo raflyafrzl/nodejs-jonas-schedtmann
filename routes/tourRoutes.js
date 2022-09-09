@@ -3,6 +3,10 @@ const tourController = require('../controllers/tourController');
 
 const router = express.Router();
 
+router
+  .route('/top-5-cheap')
+  .get(tourController.aliasTopTours, tourController.getAllTours);
+
 //this middleware kind of local mini app for certain route( which is tours for this example)
 //it wouldn't be bothering any routes because it's only defined in Tour Routes
 // router.param('id', tourController.checkId); // menerima 4 parameter
