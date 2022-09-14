@@ -7,6 +7,7 @@ const DB = process.env.DATABASE.replace(
   process.env.DATABASE_PASSWORD
 );
 
+//mengembalikan sebuah promise
 mongoose
   .connect(DB, {
     useNewUrlParser: true,

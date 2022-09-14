@@ -1,6 +1,6 @@
 /* eslint-disable node/no-unsupported-features/es-syntax */
 const Tour = require('../models/tourModel');
-
+const APIFeatures = require('../utils/APIFeatures');
 // const dataTours = JSON.parse(
 //   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
 // );
@@ -10,6 +10,43 @@ exports.aliasTopTours = (req, res, next) => {
   req.query.sort = '-ratingsAverage,price';
   req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
   next();
+};
+
+exports.getTourStats = async (req, res) => {
+  try {
+    const stats = await Tour.aggregate([
+      {
+        $match: {
+          ratingsAverage: { $gte: 4.5 }
+        }
+      },
+      {
+        $group: {
+          _id: '$difficulty',
+          numOfTours: { $sum: 1 },
+          numRatings: { $sum: '$ratingsQuantity' },
+          avgRating: { $avg: '$ratingsAverage' },
+          avgPrice: { $avg: '$price' },
+          minPrice: { $min: '$price' },
+          maxPrice: { $max: '$price' }
+        }
+      }
+    ]);
+    res.status(200).json({
+      status: 'success',
+      data: stats
+      // results: dataTours.length,
+      // data: {
+      //   tours: dataTours
+      // }
+    });
+  } catch (err) {
+    console.log('error');
+    res.status(404).json({
+      status: 'failed',
+      message: err
+    });
+  }
 };
 
 //route handler
@@ -90,64 +127,76 @@ exports.deleteTour = async (req, res) => {
 };
 exports.getAllTours = async (req, res) => {
   try {
-    //1) Filtering
-    const queryObj = { ...req.query };
-    const excluded = ['page', 'sort', 'limit', 'fields'];
-    excluded.forEach(el => delete queryObj[el]);
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
 
-    //2) Advanced Filtering
-    let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
+    //kenapa melakukan features.query, karena jika features saja dia tidak mengembalikan query Object
+    //setelah itu features.query akan dilakukan await agar mengembalikan dokumen
 
-    //return Query Object
-    let query = Tour.find(JSON.parse(queryStr));
-
-    //3) Sorting
-    if (req.query.sort) {
-      const sortBy = req.query.sort.split(',').join(' ');
-      //karena sort akan bernilai 'price' maka mongoose akan melakukan sorting berdasarkan price
-
-      query = query.sort(sortBy);
-      //sort('price ratingsAverage') <== untuk melakukan sorting dalam 2 kondisi
-    } else {
-      query = query.sort('-createdAt _id');
-    }
-
-    //4) Field Limiting
-    if (req.query.fields) {
-      const fields = req.query.fields.split(',').join(' ');
-      query = query.select(fields);
-    } else {
-      query = query.select('-__v');
-    }
-
-    //5)Pagination
-
-    const page = req.query.page * 1 || 1;
-    // //jadi ketika tidak menspesifikasikan limit maka limit akan 100(100 data)
-
-    const limit = req.query.limit * 1 || 100;
-    const skip = (page - 1) * limit;
-
-    if (req.query.page) {
-      const numTours = await Tour.countDocuments();
-      if (skip >= numTours) throw new Error('This page is not exist');
-    }
-
-    query = query.skip(skip).limit(limit);
-
-    //Another Way
-    // const tours = await Tour.find()
-    //   .where('duration')
-    //   .equals(5)
-    //   .where('difficulty')
-    //   .equals('easy');
-
-    const tours = await query;
+    const tours = await features.query;
     res.status(200).json({
       status: 'success',
       result: tours.length,
       data: tours
+      // results: dataTours.length,
+      // data: {
+      //   tours: dataTours
+      // }
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: 'failed',
+      message: err.message
+    });
+  }
+};
+
+exports.getMonthlyPlan = async (req, res) => {
+  try {
+    const year = req.params.year * 1;
+    const plan = await Tour.aggregate([
+      {
+        //digunakan untuk memecahkan jika terdapat array pada suatu schema yang kemudian
+        //memecahnya menjadi masing masing document.
+        $unwind: '$startDates'
+      },
+      {
+        //urutan dari new Date(Year-month-day)
+        $match: {
+          startDates: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: { $month: '$startDates' },
+          numOfTourStarts: { $sum: 1 },
+          tours: { $push: '$name' }
+        }
+      },
+      {
+        $addFields: { month: '$_id' }
+      },
+      {
+        //menghilangkan field _id (yang berdasarkan aggregation)
+        $project: {
+          _id: 0
+        }
+      },
+      {
+        //ingat, jika minus 1 berarti dari descending
+        $sort: { numOfTourStarts: -1 }
+      }
+    ]);
+    res.status(200).json({
+      status: 'success',
+
+      data: plan
       // results: dataTours.length,
       // data: {
       //   tours: dataTours
