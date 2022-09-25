@@ -41,7 +41,6 @@ exports.getTourStats = async (req, res) => {
       // }
     });
   } catch (err) {
-    console.log('error');
     res.status(404).json({
       status: 'failed',
       message: err
@@ -180,7 +179,7 @@ exports.getMonthlyPlan = async (req, res) => {
         }
       },
       {
-        $addFields: { month: '$_id' }
+        $addFields: { month: '$_id' } // $_id disini merujuk ke _id yang di $group
       },
       {
         //menghilangkan field _id (yang berdasarkan aggregation)

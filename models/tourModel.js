@@ -108,15 +108,15 @@ tourSchema.pre('save', function(next) {
 // });
 
 //Query Middleware
+//this will represent as Query Object
 tourSchema.pre(/^find/, function(next) {
   this.find({ secretTour: { $ne: true } });
   this.start = Date.now();
   next();
 });
 
+//docs represent a file that has been found
 tourSchema.post(/^find/, function(docs, next) {
-  console.log(`Query took ${Date.now() - this.start} miliseconds`);
-  console.log(docs);
   next();
 });
 
