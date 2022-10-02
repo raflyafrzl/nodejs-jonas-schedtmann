@@ -2,6 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const toursRoutes = require('./routes/tourRoutes');
 const userRoutes = require('./routes/userRoutes');
+const errMiddleware = require('./middlewares/error-middleware');
 
 const app = express();
 //1)   Middleware
@@ -45,10 +46,13 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/tours', toursRoutes);
 
 app.all('*', (req, res, next) => {
-  res.status(404).send({
-    status: 'failed',
-    message: `cannot find ${req.originalUrl} URL`
-  });
+  const err = new Error(`Cannot find ${req.originalUrl} on this server`);
+  err.status = 'failed';
+  err.statusCode = 404;
+
+  next(err);
 });
+
+app.use(errMiddleware);
 
 module.exports = app;
