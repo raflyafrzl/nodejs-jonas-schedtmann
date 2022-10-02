@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
-const validator = require('validator');
 
 //create Mongoose Schema
 //Schema is being created for accessing mongoose/query method
@@ -12,8 +11,7 @@ const tourSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       maxlength: [40, 'A Tour name must have less or equal than 40 characters'],
-      minlength: [10, 'A Tour name must have more or equal than 10 characters'],
-      validate: validator.isAlpha
+      minlength: [10, 'A Tour name must have more or equal than 10 characters']
     },
     slug: String,
     duration: {
@@ -95,6 +93,8 @@ tourSchema.virtual('durationWeeks').get(function() {
 
 //document middleware:runs before the save command/create command, but it doesn't work on insertMany
 tourSchema.pre('save', function(next) {
+  //this merujuk ke model
+  //harus ditambahkan dalam schema juga
   this.slug = slugify(this.name, { lower: true });
 
   next();
