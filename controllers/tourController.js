@@ -1,6 +1,7 @@
 /* eslint-disable node/no-unsupported-features/es-syntax */
 const Tour = require('../models/tourModel');
 const APIFeatures = require('../utils/APIFeatures');
+const AppError = require('./../utils/app-error');
 // const dataTours = JSON.parse(
 //   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
 // );
@@ -44,23 +45,35 @@ exports.getTourStats = catchAsync(async (req, res, next) => {
 
 //route handler
 exports.getTour = catchAsync(async (req, res, next) => {
+  //jika terjadi error maka Mongoose akan langsung mengangkat errornya dan akan mengira Internal server error
+  //oleh karena itu kita harus membuat errornya agar error tersebut menjadi error Operational
+  //urutannya yaitu masuk ke catch(pada async catch)
+  //kemudian memanggil error middleware yg diisikan oleh error findById
+  //dan seterusnya.
   const tour = await Tour.findById(req.params.id);
+
+  if (!tour) {
+    return next(new AppError('No Tour found with that ID', 404));
+  }
+
   res.status(200).json({
     status: 'success ',
     data: tour
   });
 });
-exports.updateTour = catchAsync(async (req, res) => {
+exports.updateTour = catchAsync(async (req, res, next) => {
   const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true
   });
 
-  res.status(200).json({
+  if (!tour) {
+    return next(new AppError('No Tour found with that ID', 404));
+  }
+
+  res.status(204).json({
     status: 'success',
-    data: {
-      tour
-    }
+    data: null
   });
 });
 
@@ -73,8 +86,7 @@ exports.addTour = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteTour = catchAsync(async (req, res, next) => {
-  await Tour.findOneAndDelete(req.params.id);
-
+  await Tour.findOneAndDelete({ _id: req.params.id });
   //delete status code = 204
   res.status(204).json({
     status: 'success',
